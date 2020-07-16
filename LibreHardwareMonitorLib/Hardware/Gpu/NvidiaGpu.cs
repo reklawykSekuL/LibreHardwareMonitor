@@ -32,7 +32,7 @@ namespace LibreHardwareMonitor.Hardware.Gpu
         private readonly Sensor[] _temperatures;
 
         public NvidiaGpu(int adapterIndex, NvApi.NvPhysicalGpuHandle handle, NvApi.NvDisplayHandle? displayHandle, ISettings settings)
-            : base(GetName(handle), new Identifier("gpu", adapterIndex.ToString(CultureInfo.InvariantCulture)), settings)
+            : base(GetName(handle), new Identifier("gpu-nvidia", adapterIndex.ToString(CultureInfo.InvariantCulture)), settings)
         {
             _adapterIndex = adapterIndex;
             _handle = handle;
@@ -107,7 +107,7 @@ namespace LibreHardwareMonitor.Hardware.Gpu
                 _control.Control = _fanControl;
             }
 
-            if (NvidiaML.IsAvailable)
+            if (NvidiaML.IsAvailable || NvidiaML.Initialize())
             {
                 if (hasPciBusId)
                     _nvmlDevice = NvidiaML.NvmlDeviceGetHandleByPciBusId($" 0000:{busId:X2}:00.0") ?? NvidiaML.NvmlDeviceGetHandleByIndex(_adapterIndex);

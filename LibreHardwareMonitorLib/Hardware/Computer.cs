@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Security.Permissions;
+using LibreHardwareMonitor.Hardware.Controller.AeroCool;
 using LibreHardwareMonitor.Hardware.Controller.AquaComputer;
 using LibreHardwareMonitor.Hardware.Controller.Heatmaster;
+using LibreHardwareMonitor.Hardware.Controller.Nzxt;
 using LibreHardwareMonitor.Hardware.Controller.TBalancer;
 using LibreHardwareMonitor.Hardware.Gpu;
 using LibreHardwareMonitor.Hardware.Memory;
@@ -24,8 +26,8 @@ namespace LibreHardwareMonitor.Hardware
     {
         private readonly List<IGroup> _groups = new List<IGroup>();
         private readonly ISettings _settings;
-        private bool _cpuEnabled;
         private bool _controllerEnabled;
+        private bool _cpuEnabled;
         private bool _gpuEnabled;
         private bool _memoryEnabled;
         private bool _motherboardEnabled;
@@ -92,12 +94,16 @@ namespace LibreHardwareMonitor.Hardware
                         Add(new TBalancerGroup(_settings));
                         Add(new HeatmasterGroup(_settings));
                         Add(new AquaComputerGroup(_settings));
+                        Add(new AeroCoolGroup(_settings));
+                        Add(new NzxtGroup(_settings));
                     }
                     else
                     {
                         RemoveType<TBalancerGroup>();
                         RemoveType<HeatmasterGroup>();
                         RemoveType<AquaComputerGroup>();
+                        RemoveType<AeroCoolGroup>();
+                        RemoveType<NzxtGroup>();
                     }
                 }
 
@@ -356,6 +362,13 @@ namespace LibreHardwareMonitor.Hardware
             Ring0.Open();
             OpCode.Open();
 
+            AddGroups();
+
+            _open = true;
+        }
+
+        private void AddGroups()
+        {
             if (_motherboardEnabled)
                 Add(new MotherboardGroup(_smbios, _settings));
 
@@ -376,6 +389,8 @@ namespace LibreHardwareMonitor.Hardware
                 Add(new TBalancerGroup(_settings));
                 Add(new HeatmasterGroup(_settings));
                 Add(new AquaComputerGroup(_settings));
+                Add(new AeroCoolGroup(_settings));
+                Add(new NzxtGroup(_settings));
             }
 
             if (_storageEnabled)
@@ -383,8 +398,6 @@ namespace LibreHardwareMonitor.Hardware
 
             if (_networkEnabled)
                 Add(new NetworkGroup(_settings));
-
-            _open = true;
         }
 
         private static void NewSection(TextWriter writer)
@@ -475,6 +488,25 @@ namespace LibreHardwareMonitor.Hardware
 
             _smbios = null;
             _open = false;
+        }
+
+        public void Reset()
+        {
+            if (!_open)
+                return;
+
+
+            RemoveGroups();
+            AddGroups();
+        }
+
+        private void RemoveGroups()
+        {
+            while (_groups.Count > 0)
+            {
+                IGroup group = _groups[_groups.Count - 1];
+                Remove(group);
+            }
         }
 
         private class Settings : ISettings
